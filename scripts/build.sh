@@ -10,11 +10,14 @@ echo "[1/6] Cleaning..."
 rm -rf GPUMonitor.app GPUMonitor.dmg
 
 # 2. 编译
+# 说明：本机 CLT 6.4 默认使用最新 SDK（MacOSX27.0），其中引入的
+# -target-arch-variant 参数不被 6.4 识别，导致 @State 等 SwiftUI 宏
+# 编译失败。指定旧 SDK（MacOSX26.5）即可正常构建。
 echo "[2/6] Building..."
-swift build 2>&1
+SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk swift build 2>&1
 
 # 3. 查找编译产物
-BUILD_PATH="$(pwd)/.build/arm64-apple-macosx/debug/GPUMonitor"
+BUILD_PATH="$(pwd)/.build/debug/GPUMonitor"
 if [ ! -f "$BUILD_PATH" ]; then
     BUILD_PATH=$(find .build -name GPUMonitor -type f 2>/dev/null | head -1)
 fi

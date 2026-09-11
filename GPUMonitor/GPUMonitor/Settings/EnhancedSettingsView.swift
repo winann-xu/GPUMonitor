@@ -36,6 +36,16 @@ struct EnhancedSettingsView: View {
                         }
                         .frame(width: 120)
                     }
+
+                    HStack {
+                        Text("Token 端口:")
+                        Spacer()
+                        TextField("llama-server 端口", value: $settings.llamaPort, format: .number)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 80)
+                            .onSubmit { settings.save() }
+                    }
+                    .font(.system(size: 11, design: .monospaced))
                     
                     HStack {
                         Text("电源模式:")
@@ -56,6 +66,7 @@ struct EnhancedSettingsView: View {
                     Toggle("显示 CPU", isOn: $settings.showCPU)
                     Toggle("显示内存", isOn: $settings.showMemory)
                     Toggle("显示网络", isOn: $settings.showNetwork)
+                    Toggle("显示 Token 速度", isOn: $settings.showTokenSpeed)
                     Toggle("显示文本摘要", isOn: $settings.showTextSummary)
                 }
                 .padding(4)
