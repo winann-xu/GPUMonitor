@@ -107,18 +107,75 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func updateMenuBar() {
-        let memoryPercent = metricData.memoryPercent
-        menuBarCtrl.textSummary = String(
-            format: "M%.0f%% ↓%.1fM G%.0f%% %@",
-            memoryPercent,
-            metricData.netDownload,
-            metricData.gpuLoad,
-            metricData.gpuTempText
+        // 图标式（电池式）菜单栏：每个指标一个固定尺寸格子，
+        // 数值画在格子内，宽度只由格子数决定 → 不随数值抖动。
+        var chips: [MenuBarChip] = []
+
+        if settings.showMemory {
+            let percent = metricData.memoryPercent
+            chips.append(MenuBarChip(
+                text: "\(Int(percent.rounded()))",
+                fraction: min(max(percent / 100, 0), 1),
+                color: MenuBarPalette.level(percent, warn: 80, crit: 92),
+                icon: .memory
+            ))
+        }
+        if settings.showNetwork {
+            let download = metricData.netDownload
+            chips.append(MenuBarChip(
+                text: String(format: "%.1f", download),
+                fraction: min(max(download / 50, 0), 1),
+                color: download > 0.05 ? MenuBarPalette.okColor : MenuBarPalette.idleColor,
+                icon: .download
+            ))
+        }
+        if settings.showGPU {
+            let load = metricData.gpuLoad
+            chips.append(MenuBarChip(
+                text: "\(Int(load.rounded()))",
+                fraction: min(max(load / 100, 0), 1),
+                color: MenuBarPalette.level(load, warn: settings.loadThreshold,
+                                            crit: min(99, settings.loadThreshold + 10)),
+                icon: .gpu
+            ))
+        }
+        if settings.showTokenSpeed {
+            let speed = metricData.tokenSpeed
+            chips.append(MenuBarChip(
+                text: speed > 0 ? String(format: "%.0f", speed) : "–",
+                fraction: min(max(speed / 100, 0), 1),
+                color: speed > 0 ? MenuBarPalette.okColor : MenuBarPalette.idleColor,
+                icon: .tokens
+            ))
+        }
+        if settings.showSystem {
+            let temp = metricData.gpuTemp
+            chips.append(MenuBarChip(
+                text: temp > 0 ? String(format: "%.0f", temp) : "–",
+                fraction: min(max(temp / 100, 0), 1),
+                color: temp > 0
+                    ? MenuBarPalette.level(temp, warn: settings.tempThreshold,
+                                           crit: settings.tempThreshold * 1.2)
+                    : MenuBarPalette.idleColor,
+                icon: .temperature
+            ))
+        }
+
+        // 全部关掉时至少留一个格子，避免状态栏里出现空项
+        if chips.isEmpty {
+            chips.append(MenuBarChip(text: "–", fraction: 0, color: MenuBarPalette.idleColor, icon: .gpu))
+        }
+
+        menuBarCtrl.chips = chips
+        menuBarCtrl.showValues = settings.showTextSummary
+        menuBarCtrl.tooltip = MenuBarText.summary(
+            memoryPercent: metricData.memoryPercent,
+            downloadMBps: metricData.netDownload,
+            gpuLoad: metricData.gpuLoad,
+            tokenSpeed: metricData.tokenSpeed,
+            gpuTemp: metricData.gpuTemp,
+            showTokenSpeed: settings.showTokenSpeed
         )
-        menuBarCtrl.gpuLoad = metricData.gpuLoad
-        menuBarCtrl.gpuTemp = metricData.gpuTemp
-        menuBarCtrl.netDownload = metricData.netDownload
-        menuBarCtrl.netUpload = metricData.netUpload
         menuBarCtrl.isWarning = metricData.isWarning
         menuBarCtrl.isCritical = alertService.currentAlertLevel == .critical
     }

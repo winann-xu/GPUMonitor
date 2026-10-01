@@ -6,7 +6,8 @@ macOS 菜单栏常驻性能监控，实时显示 GPU / CPU / 内存 / 网络 / �
 
 ## 特性
 
-- 菜单栏摘要：内存占用、下载速度、GPU 利用率、温度、本地模型 Token 生成速度（t/s）
+- 菜单栏：图标式定长摘要（内存 / 下载 / GPU / Token / 温度）——
+  SF Symbols 图标 + 自绘固定宽度格子，数值跳动不会改变状态栏宽度
 - 弹出面板：GPU / CPU / 内存 / Swap / 网络 / 告警 / 趋势图
 - 动态配色、告警通知、历史趋势、数据导出（CSV/JSON）
 - **纯原生采集**：IORegistry、Mach、SMC、netstat；无 macmon 等外部 CLI
