@@ -151,6 +151,31 @@ struct PopoverView: View {
                         }
                     }
                 }
+
+                // 大模型（llama.cpp token 速率）
+                if settings.showTokenSpeed {
+                    metricSection("大模型", color: .orange) {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("Token 生成速度")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text("\(metricData.tokenSpeedText) t/s")
+                                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                                    .foregroundColor(.orange)
+                            }
+                            Spacer()
+                            VStack(alignment: .trailing) {
+                                Text(metricData.isLlamaGenerating ? "生成中" : "空闲")
+                                    .font(.caption)
+                                    .foregroundColor(metricData.isLlamaGenerating ? .green : .secondary)
+                                Text("llama.cpp")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
                 
                 Divider()
                 

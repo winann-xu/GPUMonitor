@@ -14,8 +14,12 @@ final class NetworkCollector {
     private init() {}
     
     /// 用当前累计字节数与上一帧的差值计算 MB/s 并写入 MetricData
-    func refresh(_ metric: MetricData) {
-        guard let total = Self.currentTotals() else { return }
+    /// netstat 子进程在后台执行，避免模型满载时阻塞主线程/菜单栏 UI。
+    func refresh(_ metric: MetricData) async {
+        let totals = await Task.detached(priority: .utility) {
+            Self.currentTotals()
+        }.value
+        guard let total = totals else { return }
         
         let now = Date()
         if let lastDate = lastSampleDate {
@@ -34,7 +38,7 @@ final class NetworkCollector {
     }
     
     /// 汇总所有活跃 en* 接口的下行/上行累计字节数
-    private static func currentTotals() -> (down: UInt64, up: UInt64)? {
+    nonisolated private static func currentTotals() -> (down: UInt64, up: UInt64)? {
         let process = Process()
         let pipe = Pipe()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/netstat")
@@ -72,7 +76,7 @@ final class NetworkCollector {
         return down == 0 && up == 0 ? nil : (down, up)
     }
     
-    private static func isPhysicalInterface(_ name: String) -> Bool {
+    nonisolated private static func isPhysicalInterface(_ name: String) -> Bool {
         // 有线/无线通常是 en0/en1/en7...；虚拟接口一般统计为 0，不影响求和
         return name.hasPrefix("en")
     }

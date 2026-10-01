@@ -61,6 +61,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var alertService = AlertService.shared
     private var metricHistory = MetricHistory.shared
     private var networkCollector = NetworkCollector.shared
+    private var tokenSpeedCollector = TokenSpeedCollector.shared
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         updateTask = Task {
@@ -82,7 +83,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             metricData.update(from: snapshot)
             alertService.checkAlerts(metricData: metricData)
-            networkCollector.refresh(metricData)
+            await networkCollector.refresh(metricData)
+            await tokenSpeedCollector.refresh(metricData)
             updateMenuBar()
             recordHistory(snapshot)
             

@@ -27,6 +27,10 @@ class MetricData: ObservableObject {
     
     @Published var netDownload: Double = 0
     @Published var netUpload: Double = 0
+
+    // llama.cpp token 生成速度（t/s）；为 0 表示空闲/不可用
+    @Published var tokenSpeed: Double = 0
+    @Published var isLlamaGenerating: Bool = false
     
     @Published var sensorState: String = "初始化…"
     
@@ -74,6 +78,10 @@ class MetricData: ObservableObject {
     // MARK: - 展示辅助
     var gpuTempText: String {
         gpuTemp > 0 ? "\(Int(gpuTemp.rounded()))°" : "—"
+    }
+
+    var tokenSpeedText: String {
+        tokenSpeed > 0 ? String(format: "%.0f", tokenSpeed) : "—"
     }
     
     var cpuTempText: String {
