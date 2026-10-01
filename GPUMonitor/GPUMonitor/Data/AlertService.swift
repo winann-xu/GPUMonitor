@@ -16,7 +16,16 @@ class AlertService: ObservableObject {
     private let cooldown: TimeInterval = 300 // 5 分钟冷却
     private let maxAlerts: Int = 50
     
-    private let notificationCenter = UNUserNotificationCenter.current()
+    /// 通知中心只能在具备合法 Bundle Identifier 的 .app 内使用。
+    /// 直接运行 `.build/.../debug/GPUMonitor` 裸二进制时
+    /// `Bundle.main.bundleIdentifier == nil`，此时调用
+    /// `UNUserNotificationCenter.current()` 会抛
+    /// `NSInternalInconsistencyException`（bundleProxyForCurrentProcess is nil）
+    /// 导致进程 SIGABRT 崩溃、菜单栏图标消失。
+    private var notificationCenter: UNUserNotificationCenter? {
+        guard Bundle.main.bundleIdentifier != nil else { return nil }
+        return UNUserNotificationCenter.current()
+    }
     
     init() {
         requestNotificationPermission()
@@ -24,7 +33,11 @@ class AlertService: ObservableObject {
     
     // MARK: - 请求通知权限
     func requestNotificationPermission() {
-        notificationCenter.requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, error in
+        guard let center = notificationCenter else {
+            hasNotificationsEnabled = false
+            return
+        }
+        center.requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, error in
             DispatchQueue.main.async {
                 self?.hasNotificationsEnabled = granted
             }
@@ -103,6 +116,7 @@ class AlertService: ObservableObject {
     
     // MARK: - 发送通知
     private func sendNotification(title: String, message: String) {
+        guard let center = notificationCenter else { return }
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = message
@@ -115,13 +129,14 @@ class AlertService: ObservableObject {
         let request = UNNotificationRequest(identifier: UUID().uuidString,
                                            content: content, trigger: nil)
         
-        notificationCenter.add(request)
+        center.add(request)
     }
     
     // MARK: - 清除告警
     func clearAlerts() {
         alerts.removeAll()
-        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
-        UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+        guard let center = notificationCenter else { return }
+        center.removeAllPendingNotificationRequests()
+        center.removeAllDeliveredNotifications()
     }
 }
